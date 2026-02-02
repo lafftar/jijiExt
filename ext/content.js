@@ -1,6 +1,7 @@
 (() => {
   const BUTTON_ID = "jiji-whatsapp-button";
   const PHONE_SELECTOR = "a.qa-show-contact[href^='tel:']";
+  const PHONE_TEXT_SELECTOR = ".qa-show-contact-phone";
   const INSERTION_SELECTOR = ".b-start-chat";
   let CLICKED = false;
 
@@ -16,42 +17,38 @@
     }
 
     if (cleaned.startsWith("234")) {
-      return `+${cleaned}`;
+      return `%2B${cleaned}`;
     }
 
     if (cleaned.startsWith("0")) {
-      return `+234${cleaned.substring(1)}`;
+      return `%2B234${cleaned.substring(1)}`;
     }
 
-    return `+234${cleaned}`;
+    return `%2B234${cleaned}`;
   };
 
   const findPhoneNumber = () => {
-    // if (!CLICKED) {
-    //   try{
-    //     document.querySelector('qa-show-contact').click();
-    //     CLICKED = true
-    //   } catch {
-    //     console.error('could not click contact button')
-    //   }
-    // }
     const phoneLink = document.querySelector(PHONE_SELECTOR);
-    if (!phoneLink) {
-      return null;
+    if (phoneLink) {
+      const tel = phoneLink.getAttribute("href") || "";
+      const telMatch = tel.match(/^tel:(.+)$/i);
+      const raw = telMatch ? telMatch[1] : phoneLink.textContent;
+      return raw ? raw.trim() : null;
     }
 
-    const tel = phoneLink.getAttribute("href") || "";
-    const telMatch = tel.match(/^tel:(.+)$/i);
-    const raw = telMatch ? telMatch[1] : phoneLink.textContent;
-    return raw ? raw.trim() : null;
+    const phoneText = document.querySelector(PHONE_TEXT_SELECTOR);
+    const rawText = phoneText ? phoneText.textContent : null;
+    return rawText ? rawText.trim() : null;
   };
 
   const createWhatsAppButton = (phoneNumber) => {
+    const pageUrl = window.location.href;
+    const message = encodeURIComponent(pageUrl);
     const button = document.createElement("a");
     button.id = BUTTON_ID;
     button.className = "jiji-whatsapp-button";
     button.textContent = "Text on WhatsApp";
-    button.href = `https://wa.me/${phoneNumber}`;
+    button.href = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text${message}&type=phone_number&app_absent=0`
     button.target = "_blank";
     button.rel = "noopener noreferrer";
     return button;
